@@ -1396,13 +1396,11 @@ Use these numbers for testing (they won't actually receive messages):
 - Guides: [zaplink.co.ke/guides](https://zaplink.co.ke/guides)
 
 ### Community
-- Discord: [discord.gg/zaplink](https://discord.gg/zaplink)
-- GitHub: [github.com/zaplink-api](https://github.com/zaplink-api)
+- GitHub: [github.com/zaplink-lab](https://github.com/ZapLink-lab/Zaplink)
 
 ### Contact
 - Email: support@zaplink.co.ke
-- Twitter: [@ZaplinkAPI](https://twitter.com/ZaplinkAPI)
-- Phone: +254 700 123 456 (Mon-Fri, 9AM-5PM EAT)
+- Phone: +254 783 698834 (Mon-Sat, 7AM-5PM EAT)
 
 ### Status Page
 Check system status: [status.zaplink.co.ke](https://status.zaplink.co.ke)
