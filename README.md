@@ -58,10 +58,16 @@ Authorization: Bearer zaplink_live_your_api_key_here
 
 ### Getting Your API Key
 
-1. Log in to [dashboard.zaplink.co.ke](https://dashboard.zaplink.co.ke)
+1. Log in to [zaplink.co.ke](https://zaplink.co.ke)
 2. Navigate to **API Keys**
 3. Click **Generate New Key**
-4. Copy and store securely (shown only once!)
+4. Copy and store securely (you can always reveal or rotate keys from your dashboard)
+
+### Security Features
+
+- **IP Whitelisting**: Restrict API key usage to specific IP addresses.
+- **Permissions (Scopes)**: Limit what an API key can do (e.g., `messages:send`, `sessions:read`).
+- **Rotation**: Rotate your API keys with a custom overlap window (default 60 minutes) to ensure zero downtime during key updates.
 
 ⚠️ **Never share your API key publicly or commit it to version control**
 
@@ -73,9 +79,9 @@ Rate limits vary by plan:
 
 | Plan | Requests/Minute | Messages/Day | Sessions |
 |------|----------------|--------------|----------|
-| **Free** | 100 | 500 | 1 |
-| **Starter** | 300 | 1,000 | 3 |
-| **Professional** | 1,000 | 2,500 | 10 |
+| **Free** | 5 | 50 | 1 |
+| **Starter** | 50 | 600 | 1 |
+| **Professional** | 100 | 6,000 | 5 |
 | **Enterprise** | Custom | Custom | Unlimited |
 
 ### Rate Limit Headers
@@ -244,6 +250,8 @@ Content-Type: application/json
 
 **Endpoint:** `POST /send/message`
 
+The `url` must be a **public URL** (your own storage, S3, CDN, etc.).
+
 **Request Body:**
 ```json
 {
@@ -290,6 +298,15 @@ Content-Type: application/json
   }
 }
 ```
+
+### Media: use your own URL
+
+Zaplink fetches the file from your public URL and deliver to the customer. This is the fastest and recommended method.
+
+- **Flow:** You pass `message: { image: { url: "https://your-cdn.com/photo.jpg" } }`. We download from your URL and deliver to the customer.
+- **Constraints:** Max file size **16 MB**. Supported: images, video, audio, documents (PDF, Office, etc.).
+
+| **Media Support** | Send any media by providing a public URL in the `message` object. Maximum file size is **16 MB**. Supported types include `image`, `video`, `document`, and `audio`. |
 
 ### Send Location
 
@@ -413,7 +430,7 @@ Create reusable message templates with variables.
 
 **Endpoint:** `POST /send/template`
 
-**Request Body:**
+**Request Body (Custom Template):**
 ```json
 {
   "sessionId": "session_abc123",
@@ -421,9 +438,19 @@ Create reusable message templates with variables.
   "to": "254712345678",
   "variables": {
     "name": "John Doe",
-    "order_id": "ORD-12345",
-    "amount": "5,000",
-    "delivery_date": "Feb 20, 2026"
+    "order_id": "ORD-12345"
+  }
+}
+```
+
+**Request Body (Library Template):**
+```json
+{
+  "sessionId": "session_abc123",
+  "template_name": "Welcome Message",
+  "to": "254712345678",
+  "variables": {
+    "name": "Jane"
   }
 }
 ```
@@ -827,7 +854,8 @@ All webhooks follow this format:
     "sessionId": "session_abc123",
     "messageId": "msg_xyz789",
     "from": "254712345678@s.whatsapp.net",
-    "fromName": "John Doe",
+    "text": "Hello! I need help with my order.",
+    "type": "text",
     "message": {
       "conversation": "Hello! I need help with my order."
     },
@@ -937,7 +965,8 @@ def webhook():
     "sessionId": "session_abc123",
     "messageId": "msg_abc123",
     "from": "254712345678@s.whatsapp.net",
-    "fromName": "John Doe",
+    "text": "Hello! I need help.",
+    "type": "text",
     "message": {
       "conversation": "Hello! I need help."
     },
@@ -1396,11 +1425,11 @@ Use these numbers for testing (they won't actually receive messages):
 - Guides: [zaplink.co.ke/guides](https://zaplink.co.ke/guides)
 
 ### Community
-- GitHub: [github.com/zaplink-lab](https://github.com/ZapLink-lab/Zaplink)
+- GitHub: [github.com/zaplink-api](https://github.com/zaplink-api)
 
 ### Contact
 - Email: support@zaplink.co.ke
-- Phone: +254 783 698834 (Mon-Sat, 7AM-5PM EAT)
+- Phone: +254 783 123 456 (Mon-Fri, 9AM-5PM EAT)
 
 ### Status Page
 Check system status: [status.zaplink.co.ke](https://status.zaplink.co.ke)
