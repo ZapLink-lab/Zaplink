@@ -36,7 +36,7 @@ The gateway executes `apiKeyMiddleware` globally. If a valid `X-API-Key` is foun
 
 | Environment | URL |
 | :--- | :--- |
-| **Production** | `http://api.zaplink.co.ke/v1` |
+| **Production** | `https://api.zaplink.co.ke/v1` |
 | **Local Development** | `http://localhost:3000/v1` |
 
 ---
