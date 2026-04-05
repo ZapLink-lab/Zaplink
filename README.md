@@ -32,11 +32,28 @@ The gateway executes `apiKeyMiddleware` globally. If a valid `X-API-Key` is foun
 
 ---
 
+### Master vs. Sub-user Keys (Partner Tier)
+
+When using the **Partner Tier**, you deal with two distinct types of API keys. Each has a strict hierarchical scope to ensure complete tenant isolation.
+
+| Key Type | Prefix Example | Typical Scope | Usage Case |
+| :--- | :--- | :--- | :--- |
+| **Master Key** | `zap_master_...` | **Partner Management** | Create/Delete sub-users, rotate secrets, view partner-wide analytics. |
+| **Sub-user Key** | `zap_...` | **Messaging Operations** | Manage WhatsApp sessions, send messages, receive webhooks for ONE customer. |
+
+#### The "On-Behalf-Of" Pattern
+To send messages for a sub-user from your backend, you must use that **Sub-user's API Key**. Master Keys are strictly for management and **cannot** be used to send messages to standard messaging endpoints.
+
+*   **Rule**: Management endpoints (`/v1/partner/*`) require a **Master Key**.
+*   **Rule**: Messaging endpoints (`/v1/sessions/*`) require a **Sub-user Key**.
+
+---
+
 ## Base URL
 
 | Environment | URL |
 | :--- | :--- |
-| **Production** | `https://api.zaplink.co.ke/v1` |
+| **Production** | `http://api.zaplink.co.ke/v1` |
 | **Local Development** | `http://localhost:3000/v1` |
 
 ---
@@ -619,6 +636,98 @@ All message events use a consistent payload structure:
 | `contact` | Contact (VCard) sharing message. |
 | `reaction` | Message reaction event. |
 | `unknown` | Unsupported or system-level message. |
+
+---
+
+## Partner Tier & White-labeling
+
+For developers building multi-tenant platforms (e.g., a CRM or Marketing tool), Zaplink provides a "Partner Tier". This allows you to provision isolated accounts (Sub-users) for your own customers using a **Master API Key**.
+
+### The Partner Workflow
+1.  **Provision**: Use your Master Key to create a `sub-user` in Zaplink. You receive a unique `api_key` for that specific customer.
+2.  **Hand-off**: Store the sub-user's `sub_user_id` and `api_key` in your system.
+3.  **Connection**: Your customer uses the `api_key` to create a WhatsApp session and scan a QR code on **your** dashboard.
+4.  **Isolation**: All data (sessions, messages, webhooks) for that sub-user is strictly isolated from other customers.
+
+---
+
+### 1. Create a Sub-user
+Provision a new customer account.
+*   **Method:** `POST`
+*   **Path:** `/partner/sub-users`
+*   **Auth:** **Master API Key Required**
+*   **Body:**
+    ```json
+    {
+      "external_user_id": "customer_001",
+      "display_name": "Test Customer One"
+    }
+    ```
+*   **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "sub_user_id": "uuid-...",
+        "api_key": "zap_sub_abcd123.secret...",
+        "webhook_secret": "whsec_...",
+        "webhook_url": "https://api.zaplink.co.ke/v1/partner/webhooks/customer_001"
+      }
+    }
+    ```
+> [!IMPORTANT]
+> The `api_key` and `webhook_secret` are **only shown once** during creation. If lost, use the **Rotate Secret** endpoint.
+
+---
+
+### 2. List Sub-users
+Retrieve all sub-users provisioned under your Partner account.
+*   **Method:** `GET`
+*   **Path:** `/partner/sub-users`
+*   **Auth:** Master API Key
+*   **Response:**
+    ```json
+    {
+      "success": true,
+      "data": {
+        "data": [
+          {
+            "sub_user_id": "...",
+            "external_user_id": "customer_001",
+            "display_name": "...",
+            "status": "active"
+          }
+        ],
+        "total": 1
+      }
+    }
+    ```
+
+---
+
+### 3. Rotate Sub-user Secrets
+Generate a new API Key or Webhook Secret for a sub-user.
+*   **Method:** `POST`
+*   **Path:** `/partner/sub-users/:external_user_id/rotate-secret`
+*   **Auth:** Master API Key
+*   **Body:**
+    ```json
+    { "type": "api_key" } // or "webhook_secret"
+    ```
+
+---
+
+### 4. Multi-Tenant Webhooks
+Partners receive a unified webhook stream for ALL their sub-users.
+
+**Headers provided for Partner Webhooks:**
+*   `X-Zaplink-Sub-User-Id`: The `external_user_id` of the customer who sent/received the message.
+*   `X-WA-Signature`: HMAC-SHA256 signature generated using the **Partner's Master Webhook Secret**.
+
+---
+
+### 5. Self-Healing Sessions
+When a sub-user requests their session status or QR code, Zaplink automatically checks if the background WhatsApp socket is alive. If the socket has crashed or timed out, it is **instantly re-animated** in the background, ensuring 100% reliability for QR delivery without manual intervention.
 
 ---
 
